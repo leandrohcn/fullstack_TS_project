@@ -1,0 +1,8 @@
+POST http://localhost:3001/auth/cadastro
+Content-Type: application/json
+
+{
+  "nome": "sdgsaad",
+  "email": "   ",
+  "senha": " "
+}  
