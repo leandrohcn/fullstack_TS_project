@@ -25,6 +25,7 @@ model Produto {
   preco       Float
   donoId      Int?
   dono        Usuario? @relation(fields: [donoId], references: [id])
+  reservadoEm DateTime?
 }
 
 model Usuario {
