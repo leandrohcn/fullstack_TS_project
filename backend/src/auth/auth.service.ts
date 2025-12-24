@@ -22,12 +22,14 @@ export class AuthService {
             throw new UnauthorizedException('Credenciais inválidas');
         }
 
-        const accessToken = await this.jwtService.signAsync({ 
-            id: usuario.id,
-            nome: usuario.nome,
-            email: usuario.email,
-            role: usuario.role
-        });
+        const payload = { 
+            sub: usuario.id,      // <--- OBRIGATÓRIO: 'sub' deve receber o ID
+            email: usuario.email, 
+            role: usuario.role, 
+            nome: usuario.nome 
+        };
+
+        const accessToken = this.jwtService.sign(payload);
 
         return {accessToken};
     }

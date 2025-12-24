@@ -75,6 +75,7 @@ export class ProdutoService {
     if (produto.donoId !== idUsuario) {
       throw new BadRequestException('Você não pode cancelar a reserva deste produto');
     }
+    
     return this.prismaService.produto.update({
       where: { id },
       data: { donoId: null,
