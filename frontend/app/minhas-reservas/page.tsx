@@ -59,6 +59,27 @@ export default function MinhasReservas() {
     setProdutos(produtos.filter(p => p.id !== id));
   }
 
+  function DescricaoRetratil({ texto }: { texto: string }) {
+  const [visivel, setVisivel] = useState(false);
+
+  return (
+    <div className="mt-2">
+      <button 
+        onClick={() => setVisivel(!visivel)}
+        className="text-xs text-blue-600 hover:text-blue-800 font-semibold underline focus:outline-none"
+      >
+        {visivel ? 'Ocultar detalhes ▲' : 'Ver descrição ▼'}
+      </button>
+      
+      {visivel && (
+        <div className="mt-2 p-3 bg-gray-50 rounded border border-gray-100 text-gray-900 text-sm animate-fadeIn">
+          {texto}
+        </div>
+      )}
+    </div>
+  );
+}
+
   if (loading) return <div className="p-8 text-center">Carregando...</div>;
 
   return (
@@ -81,8 +102,8 @@ export default function MinhasReservas() {
             {produtos.map((produto) => (
               <div key={produto.id} className="bg-white p-6 rounded-lg shadow border-l-4 border-blue-500 flex justify-between items-center">
                 <div>
-                  <h2 className="text-xl font-bold">{produto.nome}</h2>
-                  <p className="text-gray-600">{produto.descricao}</p>
+                  <h2 className="text-xl font-bold text-gray-600">{produto.nome}</h2>
+                  <DescricaoRetratil texto={produto.descricao} />
                 </div>
                 <button 
                   onClick={() => handleDevolver(produto.id)}

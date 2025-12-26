@@ -14,9 +14,6 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setErro('');
-    
-    // 1. Log para saber se o clique funcionou
-    console.log("Tentando logar com:", email, senha); 
 
     try {
       const response = await fetch('http://localhost:3001/auth/login', {
@@ -24,24 +21,21 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, senha }),
       });
-      
-      // 2. Log para ver o que o backend respondeu
-      console.log("Status da resposta:", response.status);
 
       if (!response.ok) {
-        throw new Error('Email ou senha inválidos'); // Isso vai pro catch
+        throw new Error('Email ou senha inválidos'); 
       }
 
       const data = await response.json();
-      console.log("Token recebido:", data); // 3. Log para ver o token
+      console.log("Token recebido:", data); 
 
       Cookies.set('token', data.accessToken, { expires: 1 });
       
-      console.log("Redirecionando..."); // 4. Log final
+      console.log("Redirecionando...");
       router.push('/'); 
       
     } catch (err: any) {
-      console.error("Erro no login:", err); // 5. Log de erro
+      console.error("Erro no login:", err); 
       setErro(err.message);
     }
 }
