@@ -5,6 +5,9 @@ export interface Produto {
   preco: number;
   donoId: number | null;
   reservadoEm?: string | null;
+  _count?: {
+    fila: number;
+  };
 }
 
 export interface Usuario {

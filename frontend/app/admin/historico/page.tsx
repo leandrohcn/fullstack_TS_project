@@ -24,10 +24,37 @@ interface TokenPayload {
   role: string;
 }
 
+// --- COMPONENTE VISUAL SIMPLIFICADO (SÓ 2 CORES) ---
+function BadgeAcao({ tipo }: { tipo: string }) {
+  // Se o texto da ação contiver "RESERVA" (seja manual, fila, auto), pinta de Azul
+  if (tipo.includes('RESERVA')) {
+    return (
+      <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold border border-blue-200 flex items-center gap-1 w-fit">
+         📥 Reserva
+      </span>
+    );
+  }
+
+  // Se o texto da ação contiver "DEVOLUCAO" (seja manual ou auto), pinta de Laranja
+  if (tipo.includes('DEVOLUCAO')) {
+    return (
+      <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-bold border border-orange-200 flex items-center gap-1 w-fit">
+         📤 Devolução
+      </span>
+    );
+  }
+
+  // Caso apareça algo estranho
+  return (
+    <span className="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold border border-gray-200">
+       {tipo}
+    </span>
+  );
+}
+
 export default function HistoricoPage() {
   const router = useRouter();
   
-
   const [historico, setHistorico] = useState<HistoricoItem[]>([]);
   const [busca, setBusca] = useState('');
   const [dataInicio, setDataInicio] = useState('');
@@ -76,7 +103,6 @@ export default function HistoricoPage() {
     const matchTexto = 
         item.usuario?.nome.toLowerCase().includes(termo) ||
         item.produto?.nome.toLowerCase().includes(termo);
-
 
     const dataItem = item.data.split('T')[0]; 
     
@@ -172,7 +198,6 @@ export default function HistoricoPage() {
                 </tr>
             </thead>
             <tbody>
-                {/* AQUI USAMOS O ARRAY FILTRADO EM VEZ DO ORIGINAL */}
                 {historicoFiltrado.map((item) => (
                     <tr key={item.id} className="border-b hover:bg-gray-50 text-sm transition-colors">
                         <td className="p-3 text-gray-600 font-mono">
@@ -182,13 +207,11 @@ export default function HistoricoPage() {
                             <span className="font-bold text-black block">{item.usuario?.nome || 'Deletado'}</span>
                             <span className="text-xs text-gray-500">{item.usuario?.email}</span>
                         </td>
+                        
                         <td className="p-3">
-                            {item.acao === 'RESERVA' ? (
-                                <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-bold border border-blue-200">RESERVA 📥</span>
-                            ) : (
-                                <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded text-xs font-bold border border-orange-200">DEVOLUÇÃO 📤</span>
-                            )}
+                            <BadgeAcao tipo={item.acao} />
                         </td>
+
                         <td className="p-3 font-medium text-gray-800">
                             {item.produto?.nome || 'Deletado'}
                         </td>
