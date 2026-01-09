@@ -4,13 +4,20 @@ import type { CreateProdutoDto } from './dto/create-produto.dto';
 import type { UpdateProdutoDto } from './dto/update-produto.dto';
 import { authGuard } from 'src/auth/auth.guard';
 import { RolesGuard } from 'src/auth/roles.guard';
-import { Role } from '@prisma/client';
+import { Role } from '../enums/role.enum';
 import { Roles } from 'src/auth/roles.decorators';
 
 @Controller('produto')
 @UseGuards(authGuard, RolesGuard)
 export class ProdutoController {
   constructor(private readonly produtoService: ProdutoService) {}
+
+  @UseGuards(authGuard)
+  @Get('historico/reservas')
+  @Roles(Role.ADMIN)
+  historicoReservas(@Request() req) {
+    return this.produtoService.historicoReservas();
+  }
 
   @Post()
   @Roles(Role.ADMIN)
@@ -53,4 +60,5 @@ export class ProdutoController {
     const idUsuario = req.usuario.id;
     return this.produtoService.cancelaReservaProduto(+id, idUsuario);
   }
+
 }

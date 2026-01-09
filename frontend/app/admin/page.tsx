@@ -107,6 +107,9 @@ export default function AdminPainel() {
                 <Link href="/admin/criar-produto" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold transition-colors">
                     + Novo Produto
                 </Link>
+                 <Link href="/admin/historico" className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded font-semibold transition-colors flex items-center gap-2">
+                📜 Histórico
+                </Link> 
                 <Link href="/" className="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded font-semibold transition-colors">
                     Voltar para Loja
                 </Link>

@@ -57,12 +57,23 @@ export class ProdutoService {
       throw new BadRequestException('Limite de produtos reservados atingido');
     }
 
-    return this.prismaService.produto.update({
-      where: { id },
-      data: { donoId: idUsuario,
-              reservadoEm: new Date()
-       },
+    return this.prismaService.$transaction(async (tx) => {
+      const produtoAtualizado = await tx.produto.update({
+        where: { id },
+        data: {
+          donoId: idUsuario,
+        },
+      });
+      await tx.historico.create({
+        data: {
+          acao: 'RESERVA',
+          produtoId: id,
+          usuarioId: idUsuario,
+        },
+      });
+      return produtoAtualizado;
     });
+      
   }
 
   async cancelaReservaProduto(id: number, idUsuario: number) {
@@ -76,12 +87,32 @@ export class ProdutoService {
       throw new BadRequestException('Você não pode cancelar a reserva deste produto');
     }
     
-    return this.prismaService.produto.update({
-      where: { id },
-      data: { donoId: null,
-              reservadoEm: null
-       },
+    return this.prismaService.$transaction(async (tx) => {
+      const produtoAtualizado = await tx.produto.update({
+        where: { id },
+        data: {
+          donoId: null,
+        },
+      });
+      await tx.historico.create({
+        data: {
+          acao: 'DEVOLUCAO',
+          produtoId: id,
+          usuarioId: idUsuario,
+        },
+      });
+      return produtoAtualizado;
     });
+
   }
   
+  async historicoReservas() {
+    return this.prismaService.historico.findMany({
+      orderBy: { data: 'desc' },
+      include: { produto: {select: { nome: true, id: true } }, 
+                 usuario: {select: { nome: true, id: true } } },
+    });
+
+  }
+
 }
