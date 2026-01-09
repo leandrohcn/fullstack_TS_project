@@ -61,4 +61,8 @@ export class ProdutoController {
     return this.produtoService.cancelaReservaProduto(+id, idUsuario);
   }
 
+  @Post(':id/fila')
+  async entrarFila(@Param('id') id: string, @Request() req) {
+    return this.produtoService.entrarNaFilaEspera(+id, req.usuario.id);
+  }
 }

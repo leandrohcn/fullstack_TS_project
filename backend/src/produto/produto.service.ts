@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, UnprocessableEntityException } from '@nestjs/common';
 import { CreateProdutoDto } from './dto/create-produto.dto';
 import { UpdateProdutoDto } from './dto/update-produto.dto';
 import { PrismaService } from 'src/db/prisma.service';
+import { Cron } from '@nestjs/schedule';
 
 @Injectable()
 export class ProdutoService {
@@ -14,7 +15,13 @@ export class ProdutoService {
   }
 
   findAll() {
-    return this.prismaService.produto.findMany();
+    return this.prismaService.produto.findMany({
+      include: {
+        _count: {
+          select: {fila: true}
+        }
+      }
+    });
   }
 
   findOne(id: number) {
@@ -57,11 +64,16 @@ export class ProdutoService {
       throw new BadRequestException('Limite de produtos reservados atingido');
     }
 
+    const prazo = new Date();
+    prazo.setMinutes(prazo.getMinutes() + 2);
+
     return this.prismaService.$transaction(async (tx) => {
       const produtoAtualizado = await tx.produto.update({
         where: { id },
         data: {
           donoId: idUsuario,
+          reservadoEm: new Date(),
+          prazoLimite: prazo,
         },
       });
       await tx.historico.create({
@@ -96,7 +108,7 @@ export class ProdutoService {
       });
       await tx.historico.create({
         data: {
-          acao: 'DEVOLUCAO',
+          acao: 'DEVOLUCAO_MANUAL',
           produtoId: id,
           usuarioId: idUsuario,
         },
@@ -115,4 +127,83 @@ export class ProdutoService {
 
   }
 
+  async entrarNaFilaEspera(idProduto: number, idUsuario: number) {
+    
+    const usuarioNaFila = await this.prismaService.filaEspera.findFirst({
+      where: {
+        produtoId: idProduto,
+        usuarioId: idUsuario,
+      },
+    });
+
+    if (usuarioNaFila) {
+      throw new UnprocessableEntityException('Usuário já está na fila de espera para este produto');
+    }
+    
+    return this.prismaService.filaEspera.create({
+      data: {
+        produtoId: idProduto,
+        usuarioId: idUsuario,
+      },
+    });
+  }
+  @Cron('*/30 * * * * *')
+  async verificaPrazosVencidos() {
+    console.log('Verificando produtos com prazo vencido...');
+    const vencidos = await this.prismaService.produto.findMany({
+      where: {
+        prazoLimite: {
+          lt: new Date(),
+        },
+        donoId: { not: null },
+      },
+    });
+      for (const produto of vencidos) {
+        await this.processarRotatividade(produto.id, produto.donoId!);
+  }  }
+
+  private async processarRotatividade(idProduto: number, idUsuarioAtual: number) {
+    await this.prismaService.$transaction(async (tx) => {
+      await tx.produto.update({
+        where: { id: idProduto },
+        data: {
+          donoId: null,
+          prazoLimite: null,
+        },
+      });
+      await tx.historico.create({
+        data: {
+          acao: 'DEVOLUCAO_AUTOMATICA',
+          produtoId: idProduto,
+          usuarioId: idUsuarioAtual,
+        },
+      });
+      const proximoNaFila = await tx.filaEspera.findFirst({
+        where: { produtoId: idProduto },
+        orderBy: { dataEntrada: 'asc' },
+      });
+      if (proximoNaFila) {
+        const novoPrazo = new Date();
+        novoPrazo.setMinutes(novoPrazo.getMinutes() + 2);
+        await tx.produto.update({
+          where: { id: idProduto },
+          data: {
+            donoId: proximoNaFila.usuarioId,
+            reservadoEm: new Date(),
+            prazoLimite: novoPrazo,
+          },
+        });
+        await tx.historico.create({ 
+          data: {
+            acao: 'RESERVA_FILA',
+            produtoId: idProduto,
+            usuarioId: proximoNaFila.usuarioId,
+          },
+        });
+        await tx.filaEspera.delete({
+          where: { id: proximoNaFila.id },
+        });
+      }
+    });
+  }
 }

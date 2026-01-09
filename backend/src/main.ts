@@ -10,6 +10,7 @@ async function bootstrap() {
     forbidNonWhitelisted: true,
     transform: true,
   }));
+  console.log('Servidor rodando na porta 3001');
   await app.listen(3001);
 }
 bootstrap();
